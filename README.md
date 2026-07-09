@@ -1,5 +1,12 @@
 # Spec-Driven Development with OpenSpec and Claude Code
 
+[![Deploy Docs](https://github.com/sarveshtalele/sdd-development-using-openspec-with-claude-guide/actions/workflows/deploy-docs.yml/badge.svg)](https://github.com/sarveshtalele/sdd-development-using-openspec-with-claude-guide/actions/workflows/deploy-docs.yml)
+[![View Documentation Site](https://img.shields.io/badge/docs-view%20site-2f8fe0?style=flat-square)](https://sarveshtalele.github.io/sdd-development-using-openspec-with-claude-guide/)
+
+**[Read this repository as a website →](https://sarveshtalele.github.io/sdd-development-using-openspec-with-claude-guide/)**
+Every document below is also published as a styled, browsable site, rebuilt
+automatically on every push by [.github/workflows/deploy-docs.yml](.github/workflows/deploy-docs.yml).
+
 This repository is a single reference point for two related things: how to practice
 **Spec-Driven Development (SDD)** using OpenSpec, and how to configure and extend
 **Claude Code** — the environment OpenSpec runs inside — with Skills, Subagents, Hooks,
