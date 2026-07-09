@@ -5,7 +5,7 @@ exactly what each `/opsx:*` command generates, what a human has to review or edi
 hand afterward, and how to keep token consumption down while running the workflow.
 Every claim in this document was verified against a real `openspec init --tools claude`
 run on OpenSpec v1.5.0 — see `travel-itinerary-agent/BUILD-LOG.md` in this repository
-for the full, real, command-by-command trace this document was drawn from.*
+for the full, real, slash-command-by-slash-command build this document was drawn from.*
 
 ## 1. Purpose of This Document
 
@@ -170,4 +170,5 @@ exactly this, before and after the fix.
 See [Openspec-Documenetation.md](Openspec-Documenetation.md) for the full command
 reference and two complete sample-project walkthroughs, and
 `travel-itinerary-agent/BUILD-LOG.md` in this repository for the real, unabridged
-command-by-command trace that every claim in this document was checked against.
+slash-command-by-slash-command build that every claim in this document was checked
+against.
