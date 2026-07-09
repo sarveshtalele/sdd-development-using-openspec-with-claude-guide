@@ -105,6 +105,30 @@ window.
 
 ## 7. Skill Structure Requirements
 
+A Skill is a folder. `SKILL.md` is the only file it must contain; everything else is
+optional and exists only to be referenced from `SKILL.md`'s instructions:
+
+```
+my-skill/
+├── SKILL.md      # Required: YAML frontmatter + instructions
+├── scripts/      # Optional: executable code
+├── references/   # Optional: documentation Claude reads on demand
+├── assets/       # Optional: templates and other resources
+└── ...           # Any additional files or directories
+```
+
+| Path | Purpose | Loads when... |
+|---|---|---|
+| `SKILL.md` | Required. YAML frontmatter (`name`, `description`) plus the instructions themselves. | Frontmatter always, at startup; the instruction body only once the Skill triggers (Section 4) |
+| `scripts/` | Executable code — Python, shell, or anything else the runtime can execute. Claude runs these via bash instead of rewriting equivalent logic inline. | Only when `SKILL.md` instructs Claude to run a specific script (Section 5) |
+| `references/` | Documentation too detailed to keep in `SKILL.md` itself — API references, schemas, style guides. | Only when the current task actually needs that specific file (Section 4) |
+| `assets/` | Non-code resources a Skill produces or consumes — templates, boilerplate, sample data. | Only when the instructions point to a specific asset |
+
+`scripts/`, `references/`, and `assets/` are a naming convention, not a requirement of
+the format — a Skill can organize its supporting files however it wants, or have none
+at all. `SKILL.md` is the one file every Skill must have, and the only one Claude reads
+unconditionally once the Skill is triggered.
+
 Every Skill requires a `SKILL.md` file with YAML frontmatter naming it and describing
 it:
 
@@ -208,6 +232,11 @@ A Skill written this way is not automatically available on those other surfaces,
 Skill uploaded to one of those other surfaces is not automatically available in Claude
 Code — each is a separate deployment of the same underlying idea.
 
+The format itself is an open standard, originally developed by Anthropic and since
+adopted by a growing number of agent products beyond Claude — a Skill written to the
+specification is not inherently tied to any one vendor. See Section 14 for the formal
+specification.
+
 ## 12. Best Practices
 
 - Keep `SKILL.md` itself focused on procedure; move detailed reference material into
@@ -231,4 +260,7 @@ Code — each is a separate deployment of the same underlying idea.
 ## 14. Related Documentation
 
 See [Creating a SKILL.md File in Claude Code](01-creating-a-skill.md) for the complete
-authoring guide.
+authoring guide, and
+[agentskills.io/specification](https://agentskills.io/specification) for the formal,
+vendor-independent Agent Skills format specification referenced throughout this
+document.
