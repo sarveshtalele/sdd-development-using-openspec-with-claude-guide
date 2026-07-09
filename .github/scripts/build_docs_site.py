@@ -8,6 +8,7 @@ for every directory. Output goes to _site/, ready to be uploaded as a
 GitHub Pages artifact.
 """
 
+import hashlib
 import os
 import re
 import sys
@@ -337,15 +338,19 @@ def main() -> None:
 
     assets_dir = OUTPUT_DIR / "assets"
     assets_dir.mkdir(parents=True, exist_ok=True)
-    (assets_dir / "style.css").write_text(CSS, encoding="utf-8")
-    (assets_dir / "app.js").write_text(JS, encoding="utf-8")
+    css_hash = hashlib.sha256(CSS.encode("utf-8")).hexdigest()[:10]
+    js_hash = hashlib.sha256(JS.encode("utf-8")).hexdigest()[:10]
+    css_filename = f"style.{css_hash}.css"
+    js_filename = f"app.{js_hash}.js"
+    (assets_dir / css_filename).write_text(CSS, encoding="utf-8")
+    (assets_dir / js_filename).write_text(JS, encoding="utf-8")
     (OUTPUT_DIR / ".nojekyll").write_text("", encoding="utf-8")
 
     for page in pages:
         out = page["out"]
         out.parent.mkdir(parents=True, exist_ok=True)
-        css_href = relhref(out, assets_dir / "style.css")
-        js_href = relhref(out, assets_dir / "app.js")
+        css_href = relhref(out, assets_dir / css_filename)
+        js_href = relhref(out, assets_dir / js_filename)
         home_href = relhref(out, OUTPUT_DIR / "index.html")
         sidebar_html = render_sidebar(out, sidebar_groups)
         breadcrumbs_html = render_breadcrumbs(out, page["rel"])
@@ -378,8 +383,8 @@ def main() -> None:
             for sub in all_dirs
             if sub != d and d in sub.parents and len(sub.relative_to(d).parts) == 1
         })
-        css_href = relhref(index_file, assets_dir / "style.css")
-        js_href = relhref(index_file, assets_dir / "app.js")
+        css_href = relhref(index_file, assets_dir / css_filename)
+        js_href = relhref(index_file, assets_dir / js_filename)
         home_href = relhref(index_file, OUTPUT_DIR / "index.html")
         sidebar_html = render_sidebar(index_file, sidebar_groups)
         edit_url = GITHUB_TREE_BASE + str(dir_rel).replace(os.sep, "/") if dir_rel.parts else GITHUB_REPO_URL
