@@ -1,0 +1,81 @@
+# Spec-Driven Development with OpenSpec and Claude Code
+
+This repository is a single reference point for two related things: how to practice
+**Spec-Driven Development (SDD)** using OpenSpec, and how to configure and extend
+**Claude Code** — the environment OpenSpec runs inside — with Skills, Subagents, Hooks,
+Plugins, and MCP servers. It assumes no prior setup and no dependency on any specific
+project.
+
+---
+
+## 1. What Is Spec-Driven Development
+
+Spec-Driven Development is a way of working where the specification of a change is
+written, reviewed, and agreed upon **before** any code is written, rather than being
+reconstructed from the code (or skipped entirely) after the fact. The specification is
+not a one-time planning document that goes stale — it is a durable artifact that is kept
+in sync with the codebase as the codebase evolves.
+
+In practice, using OpenSpec, this means every non-trivial change moves through four
+reviewable artifacts before implementation begins:
+
+| Artifact | Answers |
+|---|---|
+| `proposal.md` | Why does this change need to happen? What changes? What is explicitly out of scope? |
+| `design.md` | What is the technical approach, and what are the key decisions? |
+| `specs/<capability>/spec.md` | What is the exact required behavior, expressed as testable scenarios? |
+| `tasks.md` | What are the ordered, checkable implementation steps? |
+
+Once every task in a change is implemented and genuinely verified — not just marked
+done — the change is **archived**: its specs are folded into `openspec/specs/`
+permanently, becoming the project's living, durable documentation. The next change
+starts from that updated baseline, so specs never drift far from what the code actually
+does.
+
+This differs from writing code first and documenting afterward in one important way:
+review happens while a change is still cheap to alter — at the proposal and design
+stage — instead of after implementation, when revising course is expensive.
+
+The full command-by-command workflow, including two complete start-to-finish sample
+projects, is documented in
+[openspec-guide/Openspec-Documenetation.md](openspec-guide/Openspec-Documenetation.md).
+
+---
+
+## 2. Repository Contents
+
+| Path | Description |
+|---|---|
+| [README.md](README.md) | This file — overview of SDD and an index of everything else in this repository. |
+| [openspec-guide/](openspec-guide/) | Everything needed to practice Spec-Driven Development with OpenSpec inside Claude Code. |
+| [openspec-guide/Openspec-Documenetation.md](openspec-guide/Openspec-Documenetation.md) | OpenSpec reference: setup, the full `/opsx` command set (core and expanded profiles), the typical day-to-day loop, guidance for legacy/existing codebases, and two complete sample projects executed start to finish — one using the core profile, one using the expanded profile. |
+| [claude-guide/](claude-guide/) | Everything needed to configure and extend Claude Code itself, independent of OpenSpec. |
+| [claude-guide/01-creating-a-skill.md](claude-guide/01-creating-a-skill.md) | What a Skill is, why the feature exists, how it works, and how to author a `SKILL.md` file in Claude Code. |
+| [claude-guide/02-creating-agent-skills.md](claude-guide/02-creating-agent-skills.md) | The portable Agent Skills standard: how the same `SKILL.md` format is used across the Claude API and Claude.ai, and how to build and deploy a custom Skill beyond Claude Code. |
+| [claude-guide/03-adding-mcp-servers.md](claude-guide/03-adding-mcp-servers.md) | How to add, scope, authenticate, and manage MCP servers in Claude Code, individually and for a team. |
+| [claude-guide/04-general-guide.md](claude-guide/04-general-guide.md) | An orientation guide to Claude Code's four extensibility mechanisms — Skills, Subagents, Hooks, and Plugins — how each works, and how to choose between them. |
+
+---
+
+## Official Documentation Links
+
+| Topic | Official Source |
+|---|---|
+| OpenSpec | [github.com/Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec) |
+| Claude Code overview | [code.claude.com/docs/en/how-claude-code-works.md](https://code.claude.com/docs/en/how-claude-code-works.md) |
+| Skills in Claude Code | [code.claude.com/docs/en/skills.md](https://code.claude.com/docs/en/skills.md) |
+| The `.claude` directory | [code.claude.com/docs/en/claude-directory.md](https://code.claude.com/docs/en/claude-directory.md) |
+| Subagents | [code.claude.com/docs/en/subagents.md](https://code.claude.com/docs/en/subagents.md) |
+| Hooks reference | [code.claude.com/docs/en/hooks.md](https://code.claude.com/docs/en/hooks.md) |
+| Hooks guide | [code.claude.com/docs/en/hooks-guide.md](https://code.claude.com/docs/en/hooks-guide.md) |
+| Plugins | [code.claude.com/docs/en/plugins.md](https://code.claude.com/docs/en/plugins.md) |
+| Custom slash commands | [code.claude.com/docs/en/commands.md](https://code.claude.com/docs/en/commands.md) |
+| Connecting MCP servers | [code.claude.com/docs/en/mcp](https://code.claude.com/docs/en/mcp) |
+| MCP quickstart | [code.claude.com/docs/en/mcp-quickstart](https://code.claude.com/docs/en/mcp-quickstart) |
+| CLI reference | [code.claude.com/docs/en/cli-reference](https://code.claude.com/docs/en/cli-reference) |
+| Agent Skills overview (cross-product standard) | [platform.claude.com/docs/en/agents-and-tools/agent-skills/overview](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview) |
+| Agent Skills best practices | [platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) |
+| Agent Skills quickstart | [platform.claude.com/docs/en/agents-and-tools/agent-skills/quickstart](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/quickstart) |
+| Agent Skills with the Claude API | [platform.claude.com/docs/en/build-with-claude/skills-guide](https://platform.claude.com/docs/en/build-with-claude/skills-guide) |
+| Agent Skills open standard | [agentskills.io](https://agentskills.io) |
+# sdd-development-uisng-openspec-with-claude-guide
