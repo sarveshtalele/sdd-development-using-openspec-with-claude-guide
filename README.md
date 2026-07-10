@@ -57,3 +57,17 @@ projects, is documented in
 | [claude-guide/03-adding-mcp-servers.md](claude-guide/03-adding-mcp-servers.md) | How to add, scope, authenticate, and manage MCP servers in Claude Code, individually and for a team. |
 | [claude-guide/04-general-guide.md](claude-guide/04-general-guide.md) | An orientation guide to Claude Code's four extensibility mechanisms — Skills, Subagents, Hooks, and Plugins — how each works, and how to choose between them. |
 | [claude-guide/05-creating-claude-md.md](claude-guide/05-creating-claude-md.md) | What `CLAUDE.md` is, why it exists, how it loads and how it differs from Skills, and how to create and maintain one. |
+
+## 3. Learning Materials
+
+External resources this repository's documentation was cross-checked against, for
+readers who want the primary sources or a video walkthrough alongside the written
+guides above.
+
+| Topic | Resource | Format |
+|---|---|---|
+| Agent Skills open standard | [Agent Skills Overview](https://agentskills.io/home) | Website |
+| Agent Skills open standard | [What AI Agent Skills Are and How They Work](https://youtu.be/Lg-meK5IU8Q) | Video |
+| Claude Code Skills | [What are skills?](https://www.youtube.com/watch?v=bjdBVZa66oU) | Video |
+| Claude Code Skills | [Skills in Claude Code — official docs](https://code.claude.com/docs/en/skills) | Documentation |
+| OpenSpec with Claude Code | [OpenSpec & Spec-Driven Development with Claude Code](https://www.youtube.com/watch?v=FpBYgYyU-SE&t=775s) | Video |
