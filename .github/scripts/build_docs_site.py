@@ -72,22 +72,10 @@ LINK_RE = re.compile(r"\]\(([^)\s]+)\)")
 FENCE_RE = re.compile(r"^(\s*)(`{3,}|~{3,})")
 
 
-def _rewrite_link(match: re.Match) -> str:
-    target = match.group(1)
-    if target.startswith(("http://", "https://", "mailto:", "#")):
-        return match.group(0)
-    path_part, sep, frag = target.partition("#")
-    if path_part.lower().endswith(".md"):
-        new_path = path_part[:-3] + ".html"
-        new_target = new_path + (sep + frag if sep else "")
-        return f"]({new_target})"
-    return match.group(0)
-
-
-def rewrite_markdown_links(text: str) -> str:
-    """Rewrites .md links to .html, skipping anything inside a fenced code
-    block so that literal markdown-link syntax shown as an example is left
-    untouched."""
+def _walk_non_fenced_links(text: str, repl) -> str:
+    """Applies `repl` to every markdown link in `text`, skipping anything
+    inside a fenced code block so that literal markdown-link syntax shown as
+    an example is left untouched."""
     out_lines = []
     fence_char = None
     fence_len = 0
@@ -105,8 +93,75 @@ def rewrite_markdown_links(text: str) -> str:
         if fence_char is not None:
             out_lines.append(line)
             continue
-        out_lines.append(LINK_RE.sub(_rewrite_link, line))
+        out_lines.append(LINK_RE.sub(repl, line))
     return "\n".join(out_lines)
+
+
+def _rewrite_link(match: re.Match) -> str:
+    target = match.group(1)
+    if target.startswith(("http://", "https://", "mailto:", "#")):
+        return match.group(0)
+    path_part, sep, frag = target.partition("#")
+    if path_part.lower().endswith(".md"):
+        new_path = path_part[:-3] + ".html"
+        new_target = new_path + (sep + frag if sep else "")
+        return f"]({new_target})"
+    return match.group(0)
+
+
+def rewrite_markdown_links(text: str) -> str:
+    """Rewrites .md links to .html for the multi-page site."""
+    return _walk_non_fenced_links(text, _rewrite_link)
+
+
+def resolve_link_target(current_md_path: Path, path_part: str) -> "Path | None":
+    resolved = (current_md_path.parent / path_part).resolve()
+    try:
+        return resolved.relative_to(REPO_ROOT)
+    except ValueError:
+        return None
+
+
+def _make_bundle_link_rewriter(current_md_path: Path, path_to_anchor: dict):
+    def repl(match: re.Match) -> str:
+        target = match.group(1)
+        if target.startswith(("http://", "https://", "mailto:", "#")):
+            return match.group(0)
+        path_part, _sep, _frag = target.partition("#")
+        if not path_part.lower().endswith(".md"):
+            return match.group(0)
+        resolved_rel = resolve_link_target(current_md_path, path_part)
+        if resolved_rel is None:
+            return match.group(0)
+        anchor = path_to_anchor.get(str(resolved_rel).replace(os.sep, "/"))
+        if anchor is None:
+            return match.group(0)
+        return f"](#{anchor})"
+
+    return repl
+
+
+def rewrite_markdown_links_for_bundle(text: str, current_md_path: Path, path_to_anchor: dict) -> str:
+    """Rewrites .md links to in-page #anchor links, for the single-file
+    downloadable bundle where every document lives in one HTML page."""
+    return _walk_non_fenced_links(text, _make_bundle_link_rewriter(current_md_path, path_to_anchor))
+
+
+def slugify_rel_path(rel_path: Path) -> str:
+    stem = str(rel_path.with_suffix("")).lower()
+    slug = re.sub(r"[^a-z0-9]+", "-", stem).strip("-")
+    return f"doc-{slug}"
+
+
+ID_ATTR_RE = re.compile(r'id="([^"]+)"')
+
+
+def namespace_ids(html: str, prefix: str) -> str:
+    """Prefixes every heading id the toc extension generated within one
+    page's fragment, so concatenating many pages into one document can't
+    produce duplicate ids (several docs share generic headings like '## 1.
+    Purpose')."""
+    return ID_ATTR_RE.sub(lambda m: f'id="{prefix}--{m.group(1)}"', html)
 
 
 def first_heading(text: str, fallback: str) -> str:
@@ -242,6 +297,10 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
       <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
     </button>
+    <a class="topbar-github" href="{download_href}" download="spec-driven-development-with-openspec-and-claude-code.html" title="Download the complete site as one HTML file">
+      <svg class="icon-download" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.5v9M4.5 7l3.5 3.5L11.5 7M2.5 13.5h11"/></svg>
+      <span class="topbar-github-text">Download HTML</span>
+    </a>
     <a class="topbar-github" href="{github_repo_url}" target="_blank" rel="noopener">
       <svg class="icon-github" viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       <span class="topbar-github-text">View on GitHub</span>
@@ -283,7 +342,8 @@ def wrap_tables_for_scroll(html: str) -> str:
 
 
 def render_page(md_path: Path, page_title: str, sidebar_html: str, breadcrumbs_html: str,
-                 css_href: str, js_href: str, home_href: str, edit_url: str) -> str:
+                 css_href: str, js_href: str, home_href: str, edit_url: str,
+                 download_href: str) -> str:
     raw = md_path.read_text(encoding="utf-8")
     raw = rewrite_markdown_links(raw)
     body_html = markdown.markdown(raw, extensions=MD_EXTENSIONS)
@@ -300,12 +360,13 @@ def render_page(md_path: Path, page_title: str, sidebar_html: str, breadcrumbs_h
         breadcrumbs_html=breadcrumbs_html,
         body_html=body_html,
         edit_url=edit_url,
+        download_href=download_href,
     )
 
 
 def render_dir_listing(dir_out: Path, dir_rel: Path, entries: list[dict], subdirs: list[str],
                         sidebar_html: str, css_href: str, js_href: str, home_href: str,
-                        edit_url: str) -> str:
+                        edit_url: str, download_href: str) -> str:
     title = dir_rel.name if dir_rel.parts else "Home"
     items = []
     for name in sorted(subdirs):
@@ -329,7 +390,164 @@ def render_dir_listing(dir_out: Path, dir_rel: Path, entries: list[dict], subdir
         breadcrumbs_html=breadcrumbs_html,
         body_html=body_html,
         edit_url=edit_url,
+        download_href=download_href,
     )
+
+
+def bundle_page_order(pages: list[dict], sidebar_groups: dict) -> list[dict]:
+    """Orders pages for the single-file bundle: the same order a reader sees
+    in the sidebar first, then anything left out of the sidebar (archived
+    changes, .claude command/skill definitions), grouped by directory."""
+    ordered: list[dict] = []
+    seen: set[str] = set()
+    for group_pages in sidebar_groups.values():
+        for page in group_pages:
+            key = str(page["rel"])
+            if key not in seen:
+                ordered.append(page)
+                seen.add(key)
+
+    remaining = [p for p in pages if str(p["rel"]) not in seen]
+    remaining.sort(key=lambda p: (str(p["rel"].parent), p["rel"].name.lower()))
+    ordered.extend(remaining)
+    return ordered
+
+
+def render_bundle_section(page: dict, path_to_anchor: dict) -> str:
+    raw = page["md"].read_text(encoding="utf-8")
+    raw = rewrite_markdown_links_for_bundle(raw, page["md"], path_to_anchor)
+    body_html = markdown.markdown(raw, extensions=MD_EXTENSIONS)
+    body_html = wrap_tables_for_scroll(body_html)
+    anchor = path_to_anchor[str(page["rel"]).replace(os.sep, "/")]
+    body_html = namespace_ids(body_html, anchor)
+    rel_str = str(page["rel"]).replace(os.sep, "/")
+    return (
+        f'<section class="bundle-section" id="{anchor}">'
+        f'<div class="bundle-path">{rel_str}</div>'
+        f"{body_html}"
+        f"</section>"
+    )
+
+
+BUNDLE_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{site_title} (complete offline copy)</title>
+<script>
+(function () {{
+  try {{
+    var stored = localStorage.getItem('theme');
+    var theme = stored || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  }} catch (e) {{}}
+}})();
+</script>
+<style>
+{css}
+.bundle-note {{
+  font-size: 13px;
+  color: var(--ink-faint);
+  margin-bottom: 18px;
+}}
+.bundle-note a {{ color: var(--blue-accent); }}
+.bundle-toc {{ columns: 2; column-gap: 28px; margin: 18px 0 8px; }}
+.bundle-toc-group {{ break-inside: avoid; margin-bottom: 14px; }}
+.bundle-toc-group-title {{
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--ink-faint); margin-bottom: 6px;
+}}
+.bundle-toc a {{ display: block; font-size: 13.5px; padding: 3px 0; color: var(--blue-deep); text-decoration: none; }}
+.bundle-toc a:hover {{ text-decoration: underline; }}
+.bundle-section {{ padding-top: 30px; margin-top: 30px; border-top: 1px solid var(--line); }}
+.bundle-section:first-of-type {{ border-top: none; }}
+.bundle-path {{
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11.5px; color: var(--ink-faint); margin-bottom: 10px;
+}}
+.sidebar, .topbar, .breadcrumbs, .page-footer, .bg-blob {{ display: none; }}
+.layout {{ display: block; max-width: 880px; padding: 40px 24px 100px; }}
+.content {{ padding: 40px 52px; }}
+</style>
+</head>
+<body>
+<div class="layout">
+  <main class="content-wrap">
+    <div class="content glass">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" style="position: fixed; top: 18px; right: 18px; z-index: 5;" aria-pressed="false">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <h1>{site_title}</h1>
+      <p class="bundle-note">
+        A single, self-contained offline copy of every document in
+        <a href="{github_repo_url}" target="_blank" rel="noopener">this repository</a>,
+        generated automatically on {generated_date}. Browse the live, multi-page version at
+        <a href="{live_site_url}" target="_blank" rel="noopener">{live_site_url}</a>.
+      </p>
+      <nav class="bundle-toc">
+        {toc_html}
+      </nav>
+      {sections_html}
+    </div>
+  </main>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {{
+  var themeToggle = document.getElementById('themeToggle');
+  var currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  if (themeToggle) {{
+    themeToggle.setAttribute('aria-pressed', currentTheme === 'dark' ? 'true' : 'false');
+    themeToggle.addEventListener('click', function () {{
+      var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try {{ localStorage.setItem('theme', next); }} catch (e) {{}}
+      themeToggle.setAttribute('aria-pressed', next === 'dark' ? 'true' : 'false');
+    }});
+  }}
+}});
+</script>
+</body>
+</html>
+"""
+
+
+def build_bundle(pages: list[dict], sidebar_groups: dict, bundle_out: Path, live_site_url: str) -> None:
+    import datetime
+
+    path_to_anchor = {
+        str(p["rel"]).replace(os.sep, "/"): slugify_rel_path(p["rel"]) for p in pages
+    }
+    ordered = bundle_page_order(pages, sidebar_groups)
+
+    toc_parts = []
+    for top, group_pages in sidebar_groups.items():
+        if not group_pages:
+            continue
+        title = group_title_for(top) if top else "Home"
+        toc_parts.append(f'<div class="bundle-toc-group"><div class="bundle-toc-group-title">{title}</div>')
+        for page in group_pages:
+            anchor = path_to_anchor[str(page["rel"]).replace(os.sep, "/")]
+            toc_parts.append(f'<a href="#{anchor}">{page["title"]}</a>')
+        toc_parts.append("</div>")
+    toc_html = "\n".join(toc_parts)
+
+    sections_html = "\n".join(render_bundle_section(page, path_to_anchor) for page in ordered)
+
+    generated_date = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    html = BUNDLE_TEMPLATE.format(
+        site_title=SITE_TITLE,
+        github_repo_url=GITHUB_REPO_URL,
+        live_site_url=live_site_url,
+        generated_date=generated_date,
+        css=CSS,
+        toc_html=toc_html,
+        sections_html=sections_html,
+    )
+    bundle_out.parent.mkdir(parents=True, exist_ok=True)
+    bundle_out.write_text(html, encoding="utf-8")
+    print(f"Built single-file bundle ({len(ordered)} sections) at {bundle_out}")
 
 
 def main() -> None:
@@ -359,17 +577,20 @@ def main() -> None:
     (assets_dir / js_filename).write_text(JS, encoding="utf-8")
     (OUTPUT_DIR / ".nojekyll").write_text("", encoding="utf-8")
 
+    bundle_out = OUTPUT_DIR / "download" / "documentation.html"
+
     for page in pages:
         out = page["out"]
         out.parent.mkdir(parents=True, exist_ok=True)
         css_href = relhref(out, assets_dir / css_filename)
         js_href = relhref(out, assets_dir / js_filename)
         home_href = relhref(out, OUTPUT_DIR / "index.html")
+        download_href = relhref(out, bundle_out)
         sidebar_html = render_sidebar(out, sidebar_groups)
         breadcrumbs_html = render_breadcrumbs(out, page["rel"])
         edit_url = GITHUB_BLOB_BASE + str(page["rel"]).replace(os.sep, "/")
         html = render_page(page["md"], page["title"], sidebar_html, breadcrumbs_html,
-                            css_href, js_href, home_href, edit_url)
+                            css_href, js_href, home_href, edit_url, download_href)
         out.write_text(html, encoding="utf-8")
 
         if page["rel"].name == "README.md":
@@ -399,11 +620,15 @@ def main() -> None:
         css_href = relhref(index_file, assets_dir / css_filename)
         js_href = relhref(index_file, assets_dir / js_filename)
         home_href = relhref(index_file, OUTPUT_DIR / "index.html")
+        download_href = relhref(index_file, bundle_out)
         sidebar_html = render_sidebar(index_file, sidebar_groups)
         edit_url = GITHUB_TREE_BASE + str(dir_rel).replace(os.sep, "/") if dir_rel.parts else GITHUB_REPO_URL
         html = render_dir_listing(d, dir_rel, entries, subdirs, sidebar_html, css_href, js_href,
-                                   home_href, edit_url)
+                                   home_href, edit_url, download_href)
         index_file.write_text(html, encoding="utf-8")
+
+    live_site_url = "https://sarveshtalele.github.io/sdd-development-using-openspec-with-claude-guide/"
+    build_bundle(pages, sidebar_groups, bundle_out, live_site_url)
 
     print(f"Built {len(pages)} pages into {OUTPUT_DIR}")
 
