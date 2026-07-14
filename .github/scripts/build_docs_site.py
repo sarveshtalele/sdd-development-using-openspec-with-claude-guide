@@ -690,6 +690,10 @@ CSS = """
 
 * { box-sizing: border-box; }
 
+html {
+  overflow-x: hidden;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -704,7 +708,6 @@ body {
   background: linear-gradient(160deg, #eaf3fc 0%, #f6f2e8 45%, #fdf8ef 100%);
   min-height: 100vh;
   position: relative;
-  overflow-x: hidden;
   line-height: 1.65;
   animation: fadein 0.35s ease;
   transition: background 0.25s ease, color 0.25s ease;
