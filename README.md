@@ -1,14 +1,17 @@
 # Spec-Driven Development with OpenSpec and Claude Code
 
 [![View Website](https://img.shields.io/badge/View%20Website-2f8fe0?style=for-the-badge)](https://sarveshtalele.github.io/sdd-development-using-openspec-with-claude-guide/)
-[![Download HTML](https://img.shields.io/badge/Download%20HTML-fbf4e8?style=for-the-badge&labelColor=2f8fe0&color=fbf4e8)](https://sarveshtalele.github.io/sdd-development-using-openspec-with-claude-guide/download/documentation.html)
+[![Offline HTML Copy](https://img.shields.io/badge/Offline%20HTML%20Copy-fbf4e8?style=for-the-badge&labelColor=2f8fe0&color=fbf4e8)](https://sarveshtalele.github.io/sdd-development-using-openspec-with-claude-guide/download/documentation.html)
 
 Every document in this repository is also published as a styled, browsable website —
 [**view it here**](https://sarveshtalele.github.io/sdd-development-using-openspec-with-claude-guide/)
 — rebuilt automatically on every push by
 [.github/workflows/deploy-docs.yml](.github/workflows/deploy-docs.yml). The entire site
-is also available as one self-contained, offline-readable HTML file — click **Download
-HTML** above, or open it directly from the site's top bar on any page.
+is also available as one self-contained HTML file with every document inlined. The
+**Offline HTML Copy** badge above opens it in your browser (badge links can't force a
+download across origins — browsers only honor that for links on the same site); once
+you're on the site itself, the **Download HTML** button in its top bar *does* trigger a
+real save-to-disk prompt, since that link is same-origin.
 
 This repository is a single reference point for two related things: how to practice
 **Spec-Driven Development (SDD)** using OpenSpec, and how to configure and extend
